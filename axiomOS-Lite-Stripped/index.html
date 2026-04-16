@@ -1,0 +1,1408 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#00e5a0">
+<meta name="application-name" content="axiomOS Lite">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="axiomOS Lite — free habit and focus trial with the core daily loop.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>axiomOS Lite - Free Habit + Focus Trial v2.2.2-lite</title>
+<!-- PWA manifest (optional external file; the app still works offline without it) -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script src="js/head-state.js"></script>
+<script src="js/lite-package.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Fonts are loaded from Google only when online; offline falls back to local fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!-- Charts use inline 2D canvas only, with no external runtime dependency -->
+<!-- Security: CSP meta tag
+     TRADE-OFF: inline styles are still used heavily, so style-src keeps
+     'unsafe-inline'. Script execution is now externalized so script-src can
+     stay limited to self-hosted assets plus blob workers.
+     CURRENT MITIGATION:
+       • user data injected into innerHTML is wrapped with escapeHtml()/escapeAttr()
+       • InputValidator sanitizes user input before persistence
+       • Service worker, bootstrap, and UI actions now load from external files
+     ROADMAP: continue reducing inline style usage for stricter style-src later.
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; worker-src blob: 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';">
+
+<!-- ── STYLES ─────────────────────────────────────────────── -->
+<!-- 1. Tokens: CSS custom properties, reset, scrollbar, canvas -->
+<link rel="stylesheet" href="css/tokens.css">
+<!-- 2. Layout: shell, sidebar, nav, topbar, content, sections, responsive -->
+<link rel="stylesheet" href="css/layout.css">
+<!-- 3. Components: cards, buttons, forms, modal, tabs, toast, a11y -->
+<link rel="stylesheet" href="css/components.css">
+<!-- 4. Features: habits, RPG, fitness, tomorrow, onboarding, events... -->
+<link rel="stylesheet" href="css/features.css">
+<!-- 5. Themes: data-theme variants (cyber, solo, ghibli, minimal) -->
+<link rel="stylesheet" href="css/themes.css">
+<!-- 6. Animations: @keyframes + View Transitions API -->
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/hardening.css">
+</head>
+<body>
+<a href="#content" class="skip-link" data-i18n="sb_skip_to_content">Skip to main content</a>
+
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+<!-- ── ONBOARDING ──────────────────────────────────────────── -->
+<div id="onboarding">
+  <div id="ob-step-0" class="ob-step on">
+    <div class="ob-icon">🌐</div>
+    <div class="ob-title" data-i18n="ob_welcome_title">Start your daily loop</div>
+    <div class="ob-desc" data-i18n-html="ob_welcome_desc">Private habit and focus tracker. No signup, works offline, and saves everything on this device.</div>
+    <div class="card mb3" style="text-align:left">
+      <div class="bold mb2" data-i18n="ob_lang_title">Choose your language</div>
+      <div class="small dim mb3" data-i18n="ob_lang_desc">You can change it anytime in Settings.</div>
+      <div class="flex gap2">
+        <button type="button" class="btn btn-sm btn-ghost" id="ob-lang-en-btn" data-action="ob:set-lang" data-lang="en" style="flex:1;justify-content:center;">English</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="ob-lang-it-btn" data-action="ob:set-lang" data-lang="it" style="flex:1;justify-content:center;">Italiano</button>
+      </div>
+    </div>
+    <input type="text" class="fi" id="ob-name" data-i18n-placeholder="ob_name_placeholder" placeholder="What is your name?" style="text-align:center;font-size:16px;margin-bottom:14px;">
+    <button class="btn btn-primary" id="ob-start-btn" data-action="ob:next" data-step="1" data-i18n="ob_start_btn" disabled>Start in seconds</button>
+    <div class="ob-dots mt3"><div class="ob-dot on"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
+  </div>
+  <div id="ob-step-1" class="ob-step">
+    <div class="ob-icon">🧭</div>
+    <div class="ob-title" data-i18n="ob_setup_title">Choose your setup</div>
+    <div class="ob-desc" data-i18n="ob_setup_desc">Start simple by default, or unlock more modules right away. You can always customize everything later in Settings.</div>
+    <div class="card mb3" style="text-align:left">
+      <div class="small dim mb3" data-i18n="ob_setup_help">The daily loop always stays the same: habits, focus, tomorrow, and essential stats.</div>
+      <div class="flex gap2" style="flex-wrap:wrap">
+        <button type="button" class="btn btn-sm btn-primary" id="ob-mode-simple-btn" data-action="ob:set-mode" data-mode="simple" style="flex:1 1 100%;" data-i18n="ob_mode_simple">Keep it simple</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="ob-mode-expanded-btn" data-action="ob:set-mode" data-mode="expanded" style="flex:1 1 100%;" data-i18n="ob_mode_expanded">Add advanced modules</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="ob-mode-custom-btn" data-action="ob:set-mode" data-mode="custom" style="flex:1 1 100%;" data-i18n="ob_mode_custom">Customize manually</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" data-action="ob:next" data-step="2" data-i18n="ob_continue_btn">Continue -&gt;</button>
+    <div class="ob-dots mt3"><div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div></div>
+  </div>
+  <div id="ob-step-2" class="ob-step">
+    <div class="ob-icon">⚡</div>
+    <div class="ob-title" data-i18n="ob_ready_title">Ready in under a minute</div>
+    <div class="ob-desc" data-i18n="ob_ready_desc">Open Today, complete the next habit, run one focus block, and leave a simple plan for tomorrow. Everything stays local on your device.</div>
+    <button class="btn btn-primary" data-action="ob:finish" data-i18n="ob_launch_btn">Open today</button>
+    <div class="ob-dots mt3"><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot on"></div></div>
+  </div>
+</div>
+
+<!-- ── APP SHELL ─────────────────────────────────────────── -->
+<div id="shell" class="hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#00e5a0"/>
+              <stop offset="100%" stop-color="#0099ff"/>
+            </linearGradient>
+          </defs>
+          <!-- Hexagonal axiom symbol: interlocking A shape inside hex -->
+          <polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" stroke="url(#lg1)" stroke-width="1.5" fill="rgba(0,229,160,0.07)"/>
+          <path d="M11 24 L17 10 L23 24" stroke="url(#lg1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <line x1="13" y1="19.5" x2="21" y2="19.5" stroke="url(#lg1)" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="17" cy="10" r="1.5" fill="#00e5a0"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-wordmark" id="logo-wordmark-text" data-app-name>axiomOS Lite</div>
+        <div class="logo-version"><span id="logo-tagline-text" data-i18n="app_tagline">Free habit + focus trial</span> · v<span data-app-version>2.2.2-lite</span></div>
+      </div>
+    </div>
+    <div class="persona" id="persona-card" data-action="nav:settings" title="Click to open Settings">
+      <div class="persona-row">
+        <div class="persona-avatar" id="sb-av">N</div>
+        <div>
+          <div class="persona-name" id="sb-name">User</div>
+          <div class="persona-phase" id="sb-phase">Beginner</div>
+        </div>
+      </div>
+      <div class="xp-wrap">
+        <div class="xp-row"><span>Lv.<span id="sb-lv">1</span></span><span id="sb-xp-txt">0 / 1000 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill" id="sb-xp-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <nav id="sidebar-nav" aria-label="Primary navigation">
+      <div class="nav-group" role="heading" aria-level="2" data-i18n="nav_group_core">Daily</div>
+      <div class="ni on" data-s="dashboard" role="button" tabindex="0" aria-current="page" aria-label="Today"><span class="ni-ic" aria-hidden="true">🏠</span><span data-i18n="nav_dashboard">Today</span></div>
+      <div class="ni" data-s="habits" role="button" tabindex="0" aria-label="Habits"><span class="ni-ic" aria-hidden="true">✅</span><span>Habits</span><span class="ni-badge hidden" id="bdg-hab" aria-label="remaining habits">0</span></div>
+      <div class="ni" data-s="deepwork" role="button" tabindex="0" aria-label="Deep Work"><span class="ni-ic" aria-hidden="true">⏱</span><span>Deep Work</span></div>
+      <div class="ni" data-s="tomorrow" role="button" tabindex="0" aria-label="Tomorrow Plan"><span class="ni-ic" aria-hidden="true">🌅</span><span>Tomorrow</span></div>
+      <div class="ni" data-s="stats" role="button" tabindex="0" aria-label="Statistics"><span class="ni-ic" aria-hidden="true">📊</span><span>Statistics</span></div>
+      <div id="nav-core-extra" class="hidden" role="group" aria-label="Pinned daily sections"></div>
+      <div class="nav-group" role="heading" aria-level="2" data-i18n="nav_group_advanced">Advanced</div>
+
+      <button id="nav-advanced-toggle"
+              class="nav-advanced-btn"
+              aria-expanded="false"
+              aria-controls="nav-advanced"
+              data-action="nav:advanced-toggle"
+      ><span data-nav-more-label data-i18n="nav_more">Open advanced</span><span class="nav-adv-arrow">▸</span></button>
+
+      <div id="nav-advanced" role="group" aria-label="Advanced sections">
+        <div id="nav-advanced-main">
+          <div class="ni" data-s="reflection" role="button" tabindex="0" aria-label="Reflection"><span class="ni-ic" aria-hidden="true">🌙</span><span>Reflection</span></div>
+          <div class="ni" data-s="identity" role="button" tabindex="0" aria-label="Identity"><span class="ni-ic" aria-hidden="true">🧬</span><span>Identity</span></div>
+          <div class="ni" data-s="goals" role="button" tabindex="0" aria-label="Goals"><span class="ni-ic" aria-hidden="true">🎯</span><span>Goals</span></div>
+          <div class="ni" data-s="achievements" role="button" tabindex="0" aria-label="Achievements"><span class="ni-ic" aria-hidden="true">🏆</span><span>Achievements</span><span class="ni-badge hidden" id="bdg-ach" aria-label="new achievements">0</span></div>
+          <div class="ni" data-s="life-areas" role="button" tabindex="0" aria-label="Character Sheet"><span class="ni-ic" aria-hidden="true">🧙</span><span>Character Sheet</span></div>
+          <div class="ni" data-s="fitness" role="button" tabindex="0" aria-label="Fitness"><span class="ni-ic" aria-hidden="true">🏋</span><span>Fitness</span></div>
+          <div class="ni" data-s="attributes" role="button" tabindex="0" aria-label="Attributes"><span class="ni-ic" aria-hidden="true">⚡</span><span>Attributes</span></div>
+          <div class="ni" data-s="rewards" role="button" tabindex="0" aria-label="Rewards"><span class="ni-ic" aria-hidden="true">🎁</span><span>Rewards</span></div>
+        </div>
+        <div id="nav-labs-group" class="hidden">
+          <div class="nav-group" role="heading" aria-level="3" data-i18n="nav_group_labs">Labs</div>
+          <div id="nav-labs">
+            <div class="ni" data-s="skills" role="button" tabindex="0" aria-label="Skills"><span class="ni-ic" aria-hidden="true">🛠</span><span>Skills</span></div>
+            <div class="ni" data-s="library" role="button" tabindex="0" aria-label="Library"><span class="ni-ic" aria-hidden="true">📚</span><span>Library</span></div>
+            <div class="ni" data-s="vision" role="button" tabindex="0" aria-label="Vision Board"><span class="ni-ic" aria-hidden="true">🌌</span><span>Vision Board</span></div>
+            <div class="ni" data-s="experiments" role="button" tabindex="0" aria-label="Experiments"><span class="ni-ic" aria-hidden="true">🧪</span><span>Experiments</span></div>
+            <div class="ni" data-s="packages" role="button" tabindex="0" aria-label="Packages"><span class="ni-ic" aria-hidden="true">📦</span><span>Packages</span></div>
+            <div class="ni" data-s="quotes" role="button" tabindex="0" aria-label="Motivational Quotes"><span class="ni-ic" aria-hidden="true">💬</span><span>Quotes</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-group" role="heading" aria-level="2" data-i18n="nav_group_system">System</div>
+      <div class="ni" data-s="settings" role="button" tabindex="0" aria-label="Settings"><span class="ni-ic" aria-hidden="true">⚙️</span><span>Settings</span></div>
+    </nav>
+    <div class="sb-footer">
+      <div class="streak-row">
+        <span style="font-size:18px">🔥</span>
+        <div>
+          <div class="streak-n" id="sb-streak">0</div>
+          <div class="streak-sub" data-i18n="sb_streak_days">streak days</div>
+        </div>
+        <button class="freeze-btn" data-action="streak:freeze" title="Use streak freeze" aria-label="Use streak freeze to protect your streak">❄</button>
+      </div>
+      <button class="save-btn" data-action="db:save" id="save-btn">
+        <span>💾</span><span data-i18n="sb_save_data">Save data</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main" role="main">
+    <div class="topbar" role="banner">
+      <div class="topbar-left">
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="time-nav">
+          <button class="tview-btn on" data-view="day" data-action="time:set-view" data-i18n="label_today">Today</button>
+          <button class="tview-btn" data-view="week" data-action="time:set-view" data-i18n="label_week">Week</button>
+          <button class="tview-btn" data-view="month" data-action="time:set-view" data-i18n="label_month">Month</button>
+        </div>
+        <div class="flex gap2">
+          <button class="nav-arrow" data-action="time:navigate" data-dir="-1">‹</button>
+          <div class="period-label" id="period-label" data-i18n="label_today">Today</div>
+          <button class="nav-arrow" data-action="time:navigate" data-dir="1">›</button>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div id="daily-quest-badge" role="button" tabindex="0" data-action="nav:quests" aria-label="Open today's focus" data-i18n="topbar_daily_quest" data-i18n-aria-label="topbar_daily_quest">Today</div>
+        <button class="icon-btn" data-action="modal:open" data-modal="m-add-habit" title="Add habit" aria-label="Add habit" data-i18n-title="topbar_new_habit" data-i18n-aria-label="topbar_new_habit">＋</button>
+        <button class="icon-btn" data-action="db:save" title="Save data" aria-label="Save data" data-i18n-title="topbar_save" data-i18n-aria-label="topbar_save">💾</button>
+        <button class="icon-btn" data-action="data:export" title="Export data" aria-label="Export data" data-i18n-title="topbar_export" data-i18n-aria-label="topbar_export">📤</button>
+      </div>
+    </div>
+
+    <div id="content" role="region" data-i18n-aria-label="content_main" aria-label="Main content">
+
+      <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+      <div id="sec-dashboard" class="sec on">
+        <div id="dash-daily-focus" class="mb4"></div>
+
+        <!-- Stats -->
+        <div class="g4 mb4" id="dash-stats"></div>
+
+        <div id="dash-optional-cards" class="g2 mb4 hidden"></div>
+
+        <!-- Momentum + alignment row -->
+        <div class="g2 mb4">
+          <div class="card">
+            <div class="sh"><div class="sh-left"><div class="title" data-i18n="dash_momentum_title">⚡ Momentum</div></div></div>
+            <div class="momentum-bar mb3" id="momentum-bar"></div>
+            <div id="momentum-msg" class="small dim"></div>
+          </div>
+          <div class="card">
+            <div class="sh"><div class="sh-left"><div class="title" data-i18n="dash_alignment_title">☀️ Alignment</div></div></div>
+            <div id="align-indicator"></div>
+          </div>
+        </div>
+
+        <!-- Habits + daily wins -->
+        <div class="g2 mb4">
+          <div>
+            <div class="sh">
+              <div class="sh-left"><div class="title" data-i18n="dash_today_habits">Today's Habits</div><div class="sub" id="dash-date-sub"></div></div>
+              <button class="btn btn-ghost btn-sm" data-action="nav:section" data-section="habits" data-i18n="dash_all_btn">All -&gt;</button>
+            </div>
+            <div id="dash-habits-list"></div>
+            <button class="twom-btn" data-action="twomin:open">
+              <div class="twom-title"><span aria-hidden="true">⚡</span> <span data-i18n="dash_two_min_title">Two-Minute Rule</span></div>
+              <div class="twom-sub" data-i18n="dash_two_min_sub">Pick one habit and start now. Just two minutes.</div>
+            </button>
+          </div>
+          <div>
+            <div class="sh"><div class="sh-left"><div class="title"><span aria-hidden="true">⚔</span> <span data-i18n="dash_quests_heading">Daily Wins</span></div></div></div>
+            <div id="daily-quests-list"></div>
+          </div>
+        </div>
+
+        <!-- Motivational quote -->
+        <div class="quote-block mb4" id="dash-quote">
+          <div class="quote-mark">"</div>
+          <blockquote id="dq-text" data-i18n="label_loading">Loading...</blockquote>
+          <cite id="dq-author">—</cite>
+        </div>
+
+        <!-- Insights -->
+        <div class="sh"><div class="sh-left"><div class="title"><span aria-hidden="true">🔍</span> <span data-i18n="dash_insights_heading">Automatic Insights</span></div></div></div>
+        <div id="insights-list" class="mb4"></div>
+
+        <!-- Heatmap -->
+        <div class="card mb4">
+          <div class="sh"><div class="sh-left"><div class="title" data-i18n="dash_activity_title">Activity</div><div class="sub" data-i18n="dash_last_16_weeks">Last 16 weeks</div></div></div>
+          <div id="dash-heatmap" class="hmap" style="padding-bottom:4px;"></div>
+        </div>
+
+        <!-- Tomorrow preview -->
+        <div class="tomorrow-card" id="dash-tomorrow-preview">
+          <div class="flex-b mb3">
+            <div class="bold"><span aria-hidden="true">🌅</span> <span data-i18n="dash_tomorrow_title">Tomorrow Plan</span></div>
+            <button class="btn btn-ghost btn-xs" data-action="nav:section" data-section="tomorrow" data-i18n="btn_edit">Edit</button>
+          </div>
+          <div id="dash-tmr-preview-body"><div class="dim small"><span data-i18n="dash_tomorrow_empty">No plan for tomorrow.</span> <span style="color:var(--purple);cursor:pointer" data-action="nav:section" data-section="tomorrow" data-i18n="dash_tomorrow_cta">Plan your day -&gt;</span></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ HABITS ═══════════════════════ -->
+      <div id="sec-habits" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title">Habits</div></div>
+          <button class="btn btn-primary" data-action="modal:open" data-modal="m-add-habit">＋ New</button>
+        </div>
+        <div class="tabs" id="hab-tabs">
+          <div class="tab on" data-tab="today">Today</div>
+          <div class="tab" data-tab="all">All</div>
+          <div class="tab" data-tab="stacking">Habit Stack</div>
+          <div class="tab" data-tab="cat">Categories</div>
+        </div>
+        <div id="hab-today"></div>
+        <div id="hab-all" class="hidden"></div>
+        <div id="hab-stacking" class="hidden">
+          <div class="card mb3">
+            <div class="sh-left mb3"><div class="title">🔗 Habit Stacking</div><div class="sub">Visual sequences of linked habits</div></div>
+            <div id="stack-visual"></div>
+          </div>
+        </div>
+        <div id="hab-cat" class="hidden"></div>
+      </div>
+
+      <!-- ═══════════════════ IDENTITY ══════════════════════ -->
+      <div id="sec-identity" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title" data-i18n="identity_system_title">Identity System</div><div class="sub" data-i18n="identity_system_subtitle">Who you are becoming every day</div></div>
+          <button class="btn btn-primary" data-action="modal:open" data-modal="m-add-id" data-i18n="identity_add_btn">＋ Identity</button>
+        </div>
+        <!-- Direction card -->
+        <div class="card mb4 card-accent">
+          <div class="flex-b mb3">
+            <div class="bold" data-i18n="direction_title">🧭 Life Direction</div>
+            <button class="btn btn-ghost btn-sm" data-action="modal:open" data-modal="m-direction" data-i18n="btn_edit">Edit</button>
+          </div>
+          <div id="dir-display"><div class="dim small" data-i18n="direction_empty">Set your life direction to receive automatic feedback.</div></div>
+        </div>
+        <div id="id-list"></div>
+      </div>
+
+      <!-- ═══════════════════ TOMORROW ════════════════════════ -->
+      <div id="sec-tomorrow" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title" data-i18n="tomorrow_title">🌅 Plan Tomorrow</div><div class="sub" id="tmr-date-sub"></div></div>
+          <button class="btn btn-primary" data-action="tomorrow:copy-today" data-i18n="tomorrow_copy_today">📋 Copy from today</button>
+        </div>
+
+        <!-- Planned habits -->
+        <div class="card mb4">
+          <div class="sh-left mb3"><div class="title" data-i18n="tomorrow_planned_habits">✅ Planned Habits</div><div class="sub" data-i18n="tomorrow_planned_habits_sub">Click to enable or disable</div></div>
+          <div id="tmr-habits-pills"></div>
+        </div>
+
+        <!-- Custom tasks -->
+        <div class="tomorrow-card mb4">
+          <div class="sh-left mb3"><div class="title" data-i18n="tomorrow_tasks_title">📋 Tasks</div></div>
+          <div id="tmr-tasks-list"></div>
+          <div class="tmr-add-row">
+            <input class="tmr-input" id="tmr-task-input" data-i18n-placeholder="tomorrow_tasks_ph" placeholder="Add a task for tomorrow..." data-action-enter="tomorrow:add-task">
+            <button class="btn btn-ghost btn-sm" data-action="tomorrow:add-task">＋</button>
+          </div>
+        </div>
+
+        <!-- Intention / note -->
+        <div class="card mb4">
+          <div class="sh-left mb3"><div class="title" data-i18n="tomorrow_intention_title">💭 Intention for Tomorrow</div></div>
+          <textarea class="fta" id="tmr-intention" data-i18n-placeholder="tomorrow_intention_ph" placeholder="Write your main intention for tomorrow..." style="min-height:90px" data-action-input="tomorrow:save"></textarea>
+        </div>
+
+        <!-- Top priorities -->
+        <div class="card mb4">
+          <div class="sh-left mb3"><div class="title" data-i18n="tomorrow_priorities_title">🎯 Top 3 Priorities</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px"><span class="tag tg">1</span><input class="fi" id="tmr-p1" data-i18n-placeholder="tomorrow_p1_ph" placeholder="First priority..." data-action-input="tomorrow:save"></div>
+            <div style="display:flex;align-items:center;gap:8px"><span class="tag tb">2</span><input class="fi" id="tmr-p2" data-i18n-placeholder="tomorrow_p2_ph" placeholder="Second priority..." data-action-input="tomorrow:save"></div>
+            <div style="display:flex;align-items:center;gap:8px"><span class="tag tp">3</span><input class="fi" id="tmr-p3" data-i18n-placeholder="tomorrow_p3_ph" placeholder="Third priority..." data-action-input="tomorrow:save"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" data-action="tomorrow:save-notify" data-i18n="tomorrow_save_plan">💾 Save Plan</button>
+          <button class="btn btn-ghost" data-action="tomorrow:clear">🗑 Reset</button>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ GOALS ═════════════════════════ -->
+      <div id="sec-goals" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title">Long-Term Goals</div></div>
+          <button class="btn btn-primary" data-action="modal:open" data-modal="m-add-goal">＋ Goal</button>
+        </div>
+        <div id="goals-list"></div>
+      </div>
+
+      <!-- ═══════════════════ DEEP WORK ══════════════════════ -->
+      <div id="sec-deepwork" class="sec">
+        <div class="g2 settings-layout">
+          <div class="settings-column">
+            <div class="card mb3 card-blue" style="text-align:center;padding:28px 20px;">
+              <div class="sh-left mb4 text-c" style="justify-content:center;"><div class="title"><span aria-hidden="true">⏱</span> <span data-i18n="dw_title">Deep Work</span></div></div>
+              <div class="t-ring" id="t-ring">
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                  <circle class="t-ring-bg" cx="100" cy="100" r="90"/>
+                  <circle class="t-ring-fill" id="t-ring-fill" cx="100" cy="100" r="90" stroke-dashoffset="565"/>
+                </svg>
+                <div class="t-ring-inner">
+                  <div class="t-time" id="t-display">25:00</div>
+                  <div class="t-phase" id="t-phase" data-i18n="dw_ready">READY</div>
+                </div>
+              </div>
+
+              <div class="frow3 mt3" style="gap:6px;">
+                <input type="number" class="fi" id="t-custom" placeholder="min" min="1" max="999" style="text-align:center;font-size:13px;padding:7px;">
+                <button class="btn btn-ghost btn-sm" data-action="timer:set" data-minutes="25">25m</button>
+                <button class="btn btn-ghost btn-sm" data-action="timer:set" data-minutes="45">45m</button>
+              </div>
+              <div class="frow3 mt2" style="gap:6px;">
+                <button class="btn btn-ghost btn-sm" data-action="timer:set" data-minutes="60">60m</button>
+                <button class="btn btn-ghost btn-sm" data-action="timer:set" data-minutes="90">90m</button>
+                <button class="btn btn-ghost btn-sm" data-action="timer:set-custom">OK</button>
+              </div>
+
+              <div class="fg mt3">
+                <input type="text" class="fi" id="t-goal-input" placeholder="🎯 Session goal..." data-i18n-placeholder="dw_goal_ph">
+              </div>
+
+              <div class="flex gap2 mt2" style="justify-content:center;flex-wrap:wrap;">
+                <button class="btn btn-blue" id="t-btn" data-action="timer:toggle" data-i18n="dw_start">▶ Start</button>
+                <button class="btn btn-ghost btn-sm" data-action="timer:reset">↺</button>
+                <button class="btn btn-ghost btn-sm" data-action="timer:focus-enter"><span aria-hidden="true">🔍</span> <span data-i18n="btn_focus">Focus</span></button>
+                <button class="hardcore-btn" data-action="timer:hardcore"><span aria-hidden="true">☠</span> <span data-i18n="dw_hardcore">Hardcore</span></button>
+              </div>
+
+              <div class="flex gap3 mt3" style="justify-content:center;font-size:12px;color:var(--text3);">
+                <span data-i18n="dw_sessions_today">Sessions today</span>: <span class="mono bold" id="t-sess-today" style="color:var(--accent2)">0</span> |
+                <span data-i18n="dw_total_label">Total</span>: <span class="mono bold" id="t-total-min" style="color:var(--accent2)">0m</span>
+              </div>
+
+              <div class="mt3">
+                <button class="btn btn-ghost btn-xs w100" data-action="timer:log-distraction"><span aria-hidden="true">⚠</span> <span data-i18n="dw_distraction">Log distraction</span></button>
+              </div>
+            </div>
+
+            <!-- Study plan -->
+            <div class="card">
+              <div class="flex-b mb3">
+                <div class="bold"><span aria-hidden="true">📚</span> <span data-i18n="dw_study_plan">Study Plan</span></div>
+                <button class="btn btn-ghost btn-xs" data-action="timer:add-study-topic">＋</button>
+              </div>
+              <div id="study-plan"></div>
+            </div>
+          </div>
+
+          <div>
+            <!-- Session history -->
+            <div class="card mb3">
+              <div class="bold mb3"><span aria-hidden="true">📋</span> <span data-i18n="dw_recent_sessions">Recent Sessions</span></div>
+              <div id="dw-sessions" class="scrolly"></div>
+            </div>
+            <!-- Distraction log -->
+            <div class="card mb3">
+              <div class="bold mb3"><span aria-hidden="true">⚠</span> <span data-i18n="dw_distractions_title">Distractions</span></div>
+              <div id="dist-log" class="distraction-log"><div class="dim small" data-i18n="dw_no_distractions">No distractions logged.</div></div>
+            </div>
+            <!-- Daily check -->
+            <div class="card card-accent">
+              <div class="bold mb3"><span aria-hidden="true">✔</span> <span data-i18n="dw_daily_check">Daily Check</span></div>
+              <div id="daily-check"></div>
+              <div class="sep"></div>
+              <div class="small dim mb2" data-i18n="dw_daily_goal_prompt">Did you reach your goals today?</div>
+              <div class="flex gap2">
+                <button class="btn btn-primary btn-sm" data-action="reflect:goal-reached" data-reached="true"><span aria-hidden="true">✅</span> <span data-i18n="btn_yes">Yes</span></button>
+                <button class="btn btn-ghost btn-sm" data-action="reflect:goal-reached" data-reached="false"><span aria-hidden="true">❌</span> <span data-i18n="btn_no">No</span></button>
+              </div>
+              <div id="goal-reached-msg" class="small mt2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ REFLECTION ═══════════════════ -->
+      <div id="sec-reflection" class="sec">
+        <div class="sh"><div class="sh-left"><div class="title"><span aria-hidden="true">🌙</span> <span data-i18n="refl_title">Reflection</span></div></div></div>
+        <div class="g2 settings-layout">
+          <div class="settings-column">
+            <div class="card mb3">
+              <div class="bold mb3" data-i18n="refl_signals_title">Daily check-in</div>
+              <div class="small dim mb2" data-i18n="refl_today_mood">Today's mood</div>
+              <div class="mood-row mb3" id="mood-pick">
+                <div class="mood-o" data-action="reflect:mood" data-mood="5">😁</div>
+                <div class="mood-o" data-action="reflect:mood" data-mood="4">🙂</div>
+                <div class="mood-o" data-action="reflect:mood" data-mood="3">😐</div>
+                <div class="mood-o" data-action="reflect:mood" data-mood="2">😕</div>
+                <div class="mood-o" data-action="reflect:mood" data-mood="1">😞</div>
+              </div>
+              <div class="small dim mb2" data-i18n="refl_energy_title">Energy</div>
+              <div id="reflect-energy" class="signal-row mb3"></div>
+              <div class="small dim mb2" data-i18n="refl_stress_title">Overwhelm / stress</div>
+              <div id="reflect-stress" class="signal-row mb3"></div>
+              <div class="small dim mb2" data-i18n="refl_emotions_title">Dominant emotions</div>
+              <div id="reflect-emotions" class="emotion-row"></div>
+            </div>
+            <div class="card mb3">
+              <div id="reflect-questions"></div>
+              <button class="btn btn-primary w100 mt3" data-action="reflect:save"><span aria-hidden="true">💾</span> <span data-i18n="refl_save_btn">Save Reflection</span></button>
+            </div>
+          </div>
+          <div class="settings-column">
+            <div id="weekly-review-card" class="mb3"></div>
+            <div class="card">
+              <div class="bold mb3"><span aria-hidden="true">📖</span> <span data-i18n="refl_history_title">History</span></div>
+              <div id="reflect-history" class="scrolly"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ STATS ═════════════════════════ -->
+      <div id="sec-stats" class="sec">
+        <div class="sh"><div class="sh-left"><div class="title" data-i18n="stats_title">📊 Statistics</div></div></div>
+        <div class="g4 mb4" id="stats-top"></div>
+        <div class="card mb4">
+          <div class="sh">
+            <div class="sh-left">
+              <div class="title" data-i18n="stats_rhythm_title">🗓 Rhythm Calendar</div>
+              <div class="sub" data-i18n="stats_rhythm_subtitle">Consistency, focus, planning, and check-ins across time.</div>
+            </div>
+          </div>
+          <div id="rhythm-controls" class="rhythm-controls mb4"></div>
+          <div class="g4 mb4" id="rhythm-top"></div>
+          <div id="rhythm-board"></div>
+          <div id="rhythm-detail" class="rhythm-detail-card mt3"></div>
+        </div>
+        <div class="g2 mb4">
+          <div class="card">
+            <div class="bold mb3" data-i18n="stats_xp_chart">XP — Last 2 Weeks</div>
+            <canvas id="xp-chart" height="180"></canvas>
+          </div>
+          <div class="card">
+            <div class="bold mb3" data-i18n="stats_cat_chart">Completions by Category</div>
+            <canvas id="cat-chart" height="180"></canvas>
+          </div>
+        </div>
+        <div class="card mb4">
+          <div class="bold mb3" data-i18n="stats_heatmap_title">Activity Heatmap (20 weeks)</div>
+          <div id="stats-heatmap" class="hmap"></div>
+        </div>
+        <div class="card mb4">
+          <div class="flex-b mb3">
+            <div>
+              <div class="bold" data-i18n="stats_activity_title">Recent Activity</div>
+              <div class="small dim" data-i18n="stats_activity_subtitle">Everything you complete or change stays consultable here on this device.</div>
+            </div>
+            <div class="tag tg" id="activity-log-count">0</div>
+          </div>
+          <div id="activity-log"></div>
+        </div>
+        <div class="g2 mb4">
+          <div class="card">
+            <div class="bold mb3" data-i18n="stats_habit_performance">📈 Habit Performance</div>
+            <div id="habit-perf"></div>
+          </div>
+          <div class="card">
+            <div class="bold mb3" data-i18n="stats_correlations">🔗 Correlations</div>
+            <div id="correlations"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ ACHIEVEMENTS ═════════════════ -->
+      <div id="sec-achievements" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title" data-i18n="achievements_title">🏆 Achievements</div><div class="sub" id="ach-prog">0 / 0 unlocked</div></div>
+        </div>
+        <div id="ach-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;"></div>
+      </div>
+
+      <!-- ═══════════════════ EXPERIMENTS ══════════════════ -->
+      <div id="sec-experiments" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title" data-i18n="experiments_title">🧪 Experiments</div></div>
+          <button class="btn btn-primary" data-action="modal:open" data-modal="m-add-exp" data-i18n="experiments_add">＋ Experiment</button>
+        </div>
+        <div id="exp-list"></div>
+      </div>
+
+      <!-- ═══════════════════ PACKAGES ══════════════════════ -->
+      <div id="sec-packages" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title" data-i18n="packages_title">📦 Habit Packages</div></div>
+          <div class="flex gap2">
+            <button class="btn btn-ghost btn-sm" data-action="packages:import-pick" data-i18n="packages_import_btn">📥 Import</button>
+            <button class="btn btn-ghost btn-sm" data-action="packages:export" data-i18n="packages_export_btn">📤 Export</button>
+            <input type="file" id="pkg-imp" accept=".json" class="hidden" data-action-change="packages:import">
+          </div>
+        </div>
+        <div id="pkg-list"></div>
+      </div>
+
+      <!-- ═══════════════════ QUOTES ════════════════════════ -->
+      <div id="sec-quotes" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title" data-i18n="quotes_title">💬 Motivational Quotes</div></div>
+          <button class="btn btn-primary" data-action="modal:open" data-modal="m-add-quote" data-i18n="quotes_add_btn">＋ Add</button>
+        </div>
+        <div id="quotes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+      </div>
+
+      <!-- ═══════════════════ SETTINGS ══════════════════════ -->
+      <div id="sec-settings" class="sec">
+        <div class="sh">
+          <div class="sh-left">
+            <div class="title" data-i18n="settings_title">⚙️ Settings</div>
+            <div class="sub" data-i18n="settings_shell_help">Keep the app focused, local, and easy to return to.</div>
+          </div>
+        </div>
+        <div class="settings-layout">
+          <div class="settings-column">
+            <div class="card settings-panel">
+              <div class="settings-panel-head">
+                <div class="settings-panel-title"><span class="settings-panel-title-icon" aria-hidden="true">👤</span><span data-i18n="settings_profile">Profile</span></div>
+                <div class="settings-panel-copy" data-i18n="settings_profile_help">Name and language used on this device.</div>
+              </div>
+              <div class="settings-input-grid">
+                <div class="settings-field-block">
+                  <label class="fl" for="set-name" data-i18n="settings_name">Name</label>
+                  <div class="settings-inline-action-row">
+                    <input type="text" class="fi" id="set-name">
+                    <button class="btn btn-primary btn-sm" data-action="settings:save-name" data-i18n="btn_save">Save</button>
+                  </div>
+                </div>
+                <div class="settings-field-block">
+                  <label class="fl" for="lang-select" data-i18n="settings_lang_label">Language</label>
+                  <select class="fi" id="lang-select"
+                          data-action-change="settings:set-lang"
+                          data-i18n-aria-label="settings_lang_label"
+                          aria-label="Select language">
+                    <option value="it">🇮🇹 Italiano</option>
+                    <option value="en">🇬🇧 English</option>
+                  </select>
+                  <div class="settings-segment-row">
+                    <button class="btn btn-sm settings-segment-btn" id="lang-it-btn" data-action="settings:set-lang" data-lang="it">🇮🇹 Italiano</button>
+                    <button class="btn btn-sm settings-segment-btn" id="lang-en-btn" data-action="settings:set-lang" data-lang="en">🇬🇧 English</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card settings-panel">
+              <div class="settings-panel-head">
+                <div class="settings-panel-title"><span class="settings-panel-title-icon" aria-hidden="true">🎨</span><span data-i18n="settings_appearance_title">Appearance</span></div>
+                <div class="settings-panel-copy" data-i18n="settings_appearance_help">Theme, accent, density and safe visual customizations for this device.</div>
+              </div>
+              <div class="settings-stack">
+                <div class="settings-field-block">
+                  <label class="fl" data-i18n="settings_accent_title">Accent Color</label>
+                  <div class="settings-accent-row">
+                    <button class="btn btn-sm" style="background:rgba(0,229,160,0.15);color:#00e5a0;border:1px solid rgba(0,229,160,0.3)" data-action="settings:set-accent" data-accent="#00e5a0" data-accent-dark="#00b87a">Green</button>
+                    <button class="btn btn-sm" style="background:rgba(0,153,255,0.15);color:#0099ff;border:1px solid rgba(0,153,255,0.3)" data-action="settings:set-accent" data-accent="#0099ff" data-accent-dark="#0066cc">Blue</button>
+                    <button class="btn btn-sm" style="background:rgba(139,92,246,0.15);color:#8b5cf6;border:1px solid rgba(139,92,246,0.3)" data-action="settings:set-accent" data-accent="#8b5cf6" data-accent-dark="#7c3aed">Purple</button>
+                    <button class="btn btn-sm" style="background:rgba(255,107,53,0.15);color:#ff6b35;border:1px solid rgba(255,107,53,0.3)" data-action="settings:set-accent" data-accent="#ff6b35" data-accent-dark="#e5521f">Orange</button>
+                  </div>
+                </div>
+
+                <div class="settings-field-block">
+                  <label class="fl" data-i18n="settings_theme_preset">Theme Preset</label>
+                  <div id="theme-presets-list"></div>
+                </div>
+
+                <details class="settings-mini-shell">
+                  <summary class="settings-mini-summary">
+                    <span class="settings-mini-summary-title" data-i18n="settings_customize_title">✨ Customization</span>
+                    <span class="settings-mini-summary-meta" data-i18n="settings_customize_help">Safe presets only: short labels and bounded UI options so the app stays stable.</span>
+                  </summary>
+                  <div class="settings-mini-body mt3">
+                    <div class="settings-input-grid">
+                      <div class="settings-field-block">
+                        <label class="fl" for="set-brand-name" data-i18n="settings_customize_brand">Workspace label</label>
+                        <input type="text" class="fi" id="set-brand-name" maxlength="18" placeholder="axiomOS">
+                      </div>
+                      <div class="settings-field-block">
+                        <label class="fl" for="set-brand-tagline" data-i18n="settings_customize_tagline">Sidebar subtitle</label>
+                        <input type="text" class="fi" id="set-brand-tagline" maxlength="44" data-i18n-placeholder="settings_customize_tagline_placeholder" placeholder="Private habit + focus">
+                      </div>
+                      <div class="settings-field-block">
+                        <label class="fl" for="set-ui-density" data-i18n="settings_customize_density">Density</label>
+                        <select class="fi" id="set-ui-density">
+                          <option value="comfortable" data-i18n="settings_customize_density_comfortable">Comfortable</option>
+                          <option value="compact" data-i18n="settings_customize_density_compact">Compact</option>
+                        </select>
+                      </div>
+                      <div class="settings-field-block">
+                        <label class="fl" for="set-ui-corners" data-i18n="settings_customize_corners">Corners</label>
+                        <select class="fi" id="set-ui-corners">
+                          <option value="soft" data-i18n="settings_customize_corners_soft">Soft</option>
+                          <option value="standard" data-i18n="settings_customize_corners_standard">Standard</option>
+                          <option value="sharp" data-i18n="settings_customize_corners_sharp">Sharp</option>
+                        </select>
+                      </div>
+                      <div class="settings-field-block">
+                        <label class="fl" for="set-background-fx" data-i18n="settings_customize_background">Background motion</label>
+                        <select class="fi" id="set-background-fx">
+                          <option value="on" data-i18n="settings_customize_background_on">On</option>
+                          <option value="off" data-i18n="settings_customize_background_off">Off</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="settings-actions-row mt3">
+                      <button class="btn btn-primary btn-sm" data-action="settings:save-customization" data-i18n="settings_customize_save">Save customizations</button>
+                      <button class="btn btn-ghost btn-sm" data-action="settings:reset-customization" data-i18n="settings_customize_reset">Reset</button>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <div class="card settings-panel">
+              <div class="settings-panel-head">
+                <div class="settings-panel-title"><span class="settings-panel-title-icon" aria-hidden="true">🧭</span><span data-i18n="settings_daily_flow_title">Daily Flow</span></div>
+                <div class="settings-panel-copy" data-i18n="settings_surface_help">Choose how broad the app should feel. You can still pin or hide individual modules below.</div>
+              </div>
+              <div class="settings-stack">
+                <div class="settings-surface-actions settings-actions-row">
+                  <button class="btn btn-ghost btn-sm" id="settings-mode-simple" data-action="settings:mode-simple" data-i18n="settings_mode_simple">Simple</button>
+                  <button class="btn btn-ghost btn-sm" id="settings-mode-expanded" data-action="settings:mode-expanded" data-i18n="settings_mode_expanded">Expanded</button>
+                  <button class="btn btn-ghost btn-sm" id="settings-mode-custom" data-action="settings:mode-custom" data-i18n="settings_mode_custom">Custom</button>
+                </div>
+
+                <div class="settings-field-block">
+                  <label class="fl" for="rem-time" data-i18n="settings_reminders">Reminders</label>
+                  <div class="settings-inline-action-row">
+                    <input type="time" class="fi" id="rem-time" value="08:00">
+                    <button class="btn btn-primary btn-sm" data-action="settings:set-reminder" data-i18n="settings_set">Set</button>
+                  </div>
+                </div>
+
+                <details class="settings-guide-shell">
+                  <summary class="settings-guide-summary">
+                    <span class="settings-guide-summary-title" data-i18n="settings_guide_title">🧭 Feature Guide</span>
+                    <span class="settings-guide-summary-meta" data-i18n="settings_guide_summary">Core vs accessory modules</span>
+                  </summary>
+                  <div class="small dim mb3 mt3" data-i18n="settings_guide_help">Core functions drive the daily loop. Accessory functions add depth and can stay pinned, advanced, or hidden.</div>
+                  <div id="settings-feature-guide"></div>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-column">
+            <div class="card settings-panel">
+              <div class="settings-panel-head">
+                <div class="settings-panel-title"><span class="settings-panel-title-icon" aria-hidden="true">🧩</span><span data-i18n="settings_modules">Active Modules</span></div>
+                <div class="settings-panel-copy" data-i18n="settings_modules_help">Keep only what you use weekly. Accessory modules can also be shown on Today directly from their card.</div>
+              </div>
+              <div id="modules-list"></div>
+            </div>
+
+            <div class="card settings-panel">
+              <div class="settings-panel-head">
+                <div class="settings-panel-title"><span class="settings-panel-title-icon" aria-hidden="true">💾</span><span data-i18n="settings_data">Data Management</span></div>
+                <div class="settings-panel-copy" data-i18n="settings_data_help">Install locally, back up your data, and move the workspace safely without an account.</div>
+              </div>
+
+              <div id="lite-upgrade-box" class="hidden"></div>
+              <div id="pwa-install-box" class="settings-pwa-strip"></div>
+
+              <div id="backup-section" class="backup-box">
+                <div class="backup-box-title" data-i18n="settings_backup_title">🗂 Local auto-backup</div>
+                <div id="backup-status" class="backup-status">
+                  <span data-i18n="settings_backup_not_configured">Automatic backup is not configured.</span>
+                </div>
+                <div class="settings-actions-row">
+                  <button class="btn btn-ghost btn-sm" id="backup-setup-btn"
+                    data-action="backup:toggle"
+                    title="Choose a folder where axiomOS will automatically save your data every minute">
+                    <span data-i18n="settings_backup_setup">📂 Configure backup</span>
+                  </button>
+                  <button class="btn btn-ghost btn-sm" id="backup-disable-btn"
+                    data-action="backup:disable" style="display:none">
+                    <span data-i18n="settings_backup_disable">🔕 Disable</span>
+                  </button>
+                </div>
+                <div class="backup-hint">
+                  <span data-i18n-html="settings_backup_hint_html">Saves <code>axiomOS-backup.json</code> to the chosen folder every 60s.<br>Works offline, no account required. Requires Chrome or Edge.</span>
+                </div>
+              </div>
+
+              <div class="backup-box">
+                <div class="backup-box-title" data-i18n="storage_title">Storage</div>
+                <div id="storage-report" class="backup-status">Refreshing storage report...</div>
+                <div class="settings-actions-row">
+                  <button class="btn btn-ghost btn-sm" data-action="storage:run-cleanup" data-i18n="storage_run_cleanup">Run data cleanup</button>
+                </div>
+              </div>
+
+              <div class="settings-data-actions">
+                <button class="btn btn-ghost btn-sm" data-action="data:export" data-i18n="settings_export_json">📤 Export JSON</button>
+                <button class="btn btn-ghost btn-sm" data-action="data:import-pick" data-i18n="settings_import_json">📥 Import</button>
+                <input type="file" id="imp-file" accept=".json" class="hidden" data-action-change="data:import">
+                <button class="btn btn-danger btn-sm" data-action="data:hard-reset" aria-label="Reset all data" data-i18n="settings_hard_reset">🗑 Full Reset</button>
+              </div>
+            </div>
+
+            <div class="card settings-panel">
+              <div class="settings-panel-head">
+                <div class="settings-panel-title"><span class="settings-panel-title-icon" aria-hidden="true">ℹ</span><span data-i18n="settings_info">Info</span></div>
+                <div class="settings-panel-copy" data-i18n="settings_info_help">Version, local-only storage, and save behavior for this device.</div>
+              </div>
+              <div class="small dim">
+                <div class="mb2"><strong style="color:var(--text)"><span data-app-name>axiomOS Lite</span> v<span data-app-version>2.2.2-lite</span></strong></div>
+                <div data-i18n="settings_local_data">All data is stored locally on your device (IndexedDB).</div>
+                <div class="mt2" data-i18n="settings_autosave">Autosave every 30s plus save on every action.</div>
+                <div class="mt2" data-i18n="settings_autobackup">Local folder auto-backup every 60s when configured.</div>
+                <div class="mt2" data-i18n-html="settings_atomic">Based on <em>Atomic Habits</em> by James Clear.</div>
+                <div class="settings-save-stamp mono" id="last-save-info">Last save: —</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ═══════════════════ CHARACTER SHEET (RPG) ══════════════ -->
+      <div id="sec-life-areas" class="sec">
+        <!-- RPG Header with Evolutionary Avatar -->
+        <div class="rpg-header" id="rpg-header-box">
+          <div class="avatar-box">
+            <div class="avatar-emoji-wrap" id="rpg-avatar-wrap">
+              <span id="rpg-avatar-emoji" style="font-size:34px">🐾</span>
+              <div class="avatar-level-badge" id="rpg-level-badge">Lv.1</div>
+            </div>
+            <div class="avatar-info">
+              <div class="avatar-title" id="rpg-char-name">Avventuriero</div>
+              <div class="avatar-subtitle" id="rpg-class-label">CUCCIOLO CURIOSO</div>
+              <div class="avatar-xp-bar">
+                <div class="avatar-xp-row">
+                  <span id="rpg-xp-cur">0 XP</span>
+                  <span id="rpg-xp-next">/ 1000 XP</span>
+                </div>
+                <div class="avatar-xp-track"><div class="avatar-xp-fill" id="rpg-xp-fill" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+          <!-- Key RPG Stats row -->
+          <div class="rpg-stats-grid" id="rpg-stats-grid">
+            <div class="rpg-stat-card">
+              <div class="rpg-stat-val" style="color:var(--gold)" id="rpg-streak">0</div>
+              <div class="rpg-stat-lbl">🔥 Streak</div>
+          <div class="rpg-stat-sub" id="rpg-streak-sub">days</div>
+            </div>
+            <div class="rpg-stat-card">
+              <div class="rpg-stat-val" style="color:var(--accent)" id="rpg-total-xp">0</div>
+              <div class="rpg-stat-lbl">⚡ Total XP</div>
+              <div class="rpg-stat-sub">earned</div>
+            </div>
+            <div class="rpg-stat-card">
+              <div class="rpg-stat-val" style="color:var(--accent2)" id="rpg-habits-done">0</div>
+              <div class="rpg-stat-lbl"><span aria-hidden="true">✅</span> <span data-i18n="dash_stats_completed">Completed</span></div>
+              <div class="rpg-stat-sub">all time</div>
+            </div>
+            <div class="rpg-stat-card">
+              <div class="rpg-stat-val" style="color:var(--purple)" id="rpg-best-streak">0</div>
+              <div class="rpg-stat-lbl">🏆 Best Streak</div>
+              <div class="rpg-stat-sub">record</div>
+            </div>
+            <div class="rpg-stat-card">
+              <div class="rpg-stat-val" style="color:var(--accent3)" id="rpg-dw-hours">0h</div>
+              <div class="rpg-stat-lbl">⏱ Deep Work</div>
+              <div class="rpg-stat-sub">total hours</div>
+            </div>
+            <div class="rpg-stat-card">
+              <div class="rpg-stat-val" style="color:var(--accent)" id="rpg-habit-count">0</div>
+              <div class="rpg-stat-lbl">🌱 Habits</div>
+              <div class="rpg-stat-sub">active</div>
+            </div>
+          </div>
+          <!-- Achievement badges earned -->
+          <div id="rpg-badges-row" class="rpg-achievements-row"></div>
+          <div id="rpg-profile-grid" class="rpg-profile-grid"></div>
+        </div>
+
+        <!-- Life Areas (domain stats) -->
+        <div class="sh"><div class="sh-left"><div class="title" id="la-title-txt">🌍 Life Areas</div><div class="sub" id="la-sub-txt">Balanced growth in every dimension</div></div></div>
+        <div id="la-grid" class="g3 mb4"></div>
+        <div id="la-detail" class="hidden"></div>
+      </div>
+
+      <!-- ═══════════════════ FITNESS ═══════════════════════════ -->
+      <div id="sec-fitness" class="sec">
+        <div class="sh">
+          <div class="sh-left"><div class="title" id="fitness-title-txt">🏋 Fitness Tracker</div><div class="sub" id="fitness-sub-txt">Workouts, hydration, weight and PRs</div></div>
+        </div>
+        <div id="ft-summary-grid" class="fitness-summary-grid mb4"></div>
+        <div class="g2 mb4">
+          <!-- Workout logger -->
+          <div>
+            <div class="card mb3">
+              <div class="bold mb3" id="ft-log-today-lbl">📋 Today's Workout</div>
+              <div class="fg">
+                <label class="fl" id="ft-type-lbl">Workout type</label>
+                <select class="fs" id="ft-type">
+                  <option value="strength">💪 Strength</option>
+                  <option value="cardio">🏃 Cardio</option>
+                  <option value="hiit">⚡ HIIT</option>
+                  <option value="yoga">🧘 Yoga / Stretching</option>
+                  <option value="sport">⚽ Sport</option>
+                  <option value="walk">🚶 Walk</option>
+                  <option value="swim">🏊 Swim</option>
+                  <option value="cycling">🚴 Cycling</option>
+                  <option value="other">✨ Other</option>
+                </select>
+              </div>
+              <div class="frow">
+                <div class="fg"><label class="fl" id="ft-dur-lbl">Duration (min)</label><input type="number" class="fi" id="ft-duration" placeholder="45" min="1" max="600"></div>
+                <div class="fg"><label class="fl" id="ft-kcal-lbl">Calories burned</label><input type="number" class="fi" id="ft-kcal" placeholder="300" min="0"></div>
+              </div>
+              <div class="fg"><label class="fl" id="ft-note-lbl">Session notes</label><input type="text" class="fi" id="ft-note" placeholder="e.g. 5x5 squat 80kg, 3km run..." ></div>
+              <div class="fg">
+                <label class="fl" id="ft-muscles-lbl">Muscles involved</label>
+                <div style="display:flex;flex-wrap:wrap;margin-top:5px;" id="ft-muscle-chips">
+                  <span class="muscle-chip" data-m="chest">🫁 Chest</span>
+                  <span class="muscle-chip" data-m="back">🔙 Back</span>
+                  <span class="muscle-chip" data-m="shoulders">🏋 Shoulders</span>
+                  <span class="muscle-chip" data-m="arms">💪 Arms</span>
+                  <span class="muscle-chip" data-m="legs">🦵 Legs</span>
+                  <span class="muscle-chip" data-m="glutes">🍑 Glutes</span>
+                  <span class="muscle-chip" data-m="core">🔥 Core</span>
+                  <span class="muscle-chip" data-m="cardio">❤️ Cardio</span>
+                </div>
+              </div>
+              <button class="btn btn-primary w100 mt3" id="ft-log-btn" data-action="fitness:log-workout">💾 Log Workout</button>
+            </div>
+
+            <!-- Water tracker -->
+            <div class="card mb3">
+              <div class="flex-b mb3">
+                <div class="bold" id="ft-water-lbl">💧 Hydration</div>
+                <div class="mono" id="ft-water-count" style="font-size:20px;font-weight:700;color:var(--accent2)">0 / 8</div>
+              </div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;" id="ft-water-drops"></div>
+              <div class="flex gap2">
+                <button class="btn btn-blue btn-sm" id="ft-add-water-btn" data-action="fitness:add-water">+ Glass</button>
+                <button class="btn btn-ghost btn-sm" id="ft-reset-water-btn" data-action="fitness:reset-water">Reset</button>
+              </div>
+            </div>
+
+            <div class="card mb3">
+              <div class="bold mb3" id="ft-targets-lbl">🎯 Targets</div>
+              <div class="frow">
+                <div class="fg"><label class="fl" id="ft-goal-workouts-lbl">Workouts / week</label><input type="number" class="fi" id="ft-goal-workouts" min="1" max="14" placeholder="3"></div>
+                <div class="fg"><label class="fl" id="ft-goal-water-lbl">Water / day</label><input type="number" class="fi" id="ft-goal-water" min="4" max="12" placeholder="8"></div>
+              </div>
+              <div class="frow">
+                <div class="fg"><label class="fl" id="ft-goal-sleep-lbl">Sleep target</label><input type="number" class="fi" id="ft-goal-sleep" min="4" max="12" step="0.5" placeholder="8"></div>
+                <div class="fg"><label class="fl" id="ft-goal-steps-lbl">Steps target</label><input type="number" class="fi" id="ft-goal-steps" min="1000" max="40000" step="500" placeholder="8000"></div>
+              </div>
+              <button class="btn btn-primary w100 mt3" id="ft-save-goals-btn" data-action="fitness:save-goals">💾 Save Targets</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="card mb3">
+              <div class="flex-b mb3">
+                <div class="bold" id="ft-checkin-lbl">🌙 Recovery Check-in</div>
+                <div class="tag tg" id="ft-checkin-status">Pending today</div>
+              </div>
+              <div class="frow">
+                <div class="fg"><label class="fl" id="ft-sleep-lbl">Sleep (hours)</label><input type="number" class="fi" id="ft-sleep" min="0" max="24" step="0.5" placeholder="7.5"></div>
+                <div class="fg"><label class="fl" id="ft-steps-lbl">Steps</label><input type="number" class="fi" id="ft-steps" min="0" max="50000" step="100" placeholder="8000"></div>
+              </div>
+              <div class="fg"><label class="fl" id="ft-recovery-lbl">Recovery / energy (1-10)</label><input type="number" class="fi" id="ft-recovery" min="1" max="10" step="1" placeholder="7"></div>
+              <button class="btn btn-primary w100 mt3" id="ft-checkin-save-btn" data-action="fitness:save-checkin">💾 Save Check-In</button>
+            </div>
+
+            <!-- Body weight log -->
+            <div class="card mb3">
+              <div class="bold mb3" id="ft-weight-lbl">⚖️ Body Weight</div>
+              <div class="flex gap2 mb3">
+                <input type="number" class="fi" id="ft-weight-val" placeholder="75.5" step="0.1" min="30" max="300" style="flex:1">
+                <button class="btn btn-primary btn-sm" data-action="fitness:log-weight">Log</button>
+              </div>
+              <div id="ft-weight-history" style="max-height:160px;overflow-y:auto;"></div>
+            </div>
+
+            <!-- Personal Records -->
+            <div class="card mb3">
+              <div class="flex-b mb3">
+                <div class="bold" id="ft-pr-lbl">🏆 Personal Records</div>
+                <button class="btn btn-ghost btn-xs" data-action="fitness:add-pr">+ PR</button>
+              </div>
+              <div id="ft-pr-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workout history -->
+        <div class="card">
+          <div class="bold mb3" id="ft-hist-lbl">📅 Workout History</div>
+          <div id="ft-workout-history" class="scrolly"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ ATTRIBUTES ═══════════════════════ -->
+      <div id="sec-attributes" class="sec">
+        <div class="sh"><div class="sh-left"><div class="title">⚡ Attributes</div><div class="sub">Upgrade your character</div></div></div>
+        <div class="card mb4"><div class="flex-b"><div><div class="small dim mb2">Points to allocate</div><div class="mono" id="attr-pts" style="font-size:28px;font-weight:700;color:var(--accent)">0</div></div><div class="dim small">+3 points at every level up</div></div></div>
+        <div class="g2"><div id="attr-list"></div><div class="card" style="display:flex;align-items:center;justify-content:center;"><div id="attr-radar"></div></div></div>
+      </div>
+
+      <!-- ═══════════════════ REWARDS ══════════════════════════ -->
+      <div id="sec-rewards" class="sec">
+        <div class="sh"><div class="sh-left"><div class="title"><span aria-hidden="true">🎁</span> <span data-i18n="rewards_title">Rewards</span></div><div class="sub" data-i18n="rewards_subtitle">Convert XP into real rewards</div></div><button class="btn btn-primary" data-action="modal:open" data-modal="m-add-reward" data-i18n="reward_new">+ New Reward</button></div>
+        <div class="g2 mb4"><div class="card"><div class="small dim mb2" data-i18n="rewards_available_xp">Available XP</div><div class="mono" id="rw-xp" style="font-size:24px;font-weight:700;color:var(--accent)">0</div></div><div class="card"><div class="small dim mb2" data-i18n="rewards_redeemed_count">Redeemed</div><div class="mono" id="rw-cnt" style="font-size:24px;font-weight:700;color:var(--text2)">0</div></div></div>
+        <div id="rewards-grid" class="g3 mb4"></div>
+        <div class="bold dim small mb2" data-i18n="rewards_history">History</div>
+        <div id="rewards-hist" class="scrolly"></div>
+      </div>
+
+      <!-- ═══════════════════ SKILLS ════════════════════════════ -->
+      <div id="sec-skills" class="sec">
+        <div class="sh"><div class="sh-left"><div class="title"><span aria-hidden="true">🛠</span> <span data-i18n="skills_title">Skills</span></div><div class="sub" data-i18n="skills_subtitle">Practice, improve, master</div></div><button class="btn btn-primary" data-action="modal:open" data-modal="m-add-skill" data-i18n="skill_new">+ New Skill</button></div>
+        <div id="skills-list"></div>
+      </div>
+
+      <!-- ═══════════════════ LIBRARY ═══════════════════════════ -->
+      <div id="sec-library" class="sec">
+        <div class="sh"><div class="sh-left"><div class="title"><span aria-hidden="true">📚</span> <span data-i18n="library_title">Library</span></div><div class="sub" data-i18n="library_subtitle">Books, courses, articles, podcasts</div></div><button class="btn btn-primary" data-action="modal:open" data-modal="m-add-lib" data-i18n="library_new">+ Add Book</button></div>
+        <div class="tabs" id="lib-tabs"><div class="tab on" data-tab="all" data-i18n="library_tab_all">All</div><div class="tab" data-tab="reading" data-i18n="library_tab_reading">Reading</div><div class="tab" data-tab="done" data-i18n="library_tab_done">Completed</div></div>
+        <div id="lib-list"></div>
+      </div>
+
+      <!-- ═══════════════════ VISION BOARD ══════════════════════ -->
+      <div id="sec-vision" class="sec">
+        <div class="sh"><div class="sh-left"><div class="title"><span aria-hidden="true">🌌</span> <span data-i18n="nav_vision_board">Vision Board</span></div><div class="sub" data-i18n="vision_subtitle">Visualize your ideal life</div></div><button class="btn btn-primary" data-action="modal:open" data-modal="m-add-vision" data-i18n="btn_add">Add</button></div>
+        <div id="vision-grid" class="g3"></div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /shell -->
+
+<!-- ── v8: TOAST NOTIFICATION STACK ──────────────────────── -->
+<div id="nx-toast-stack" role="region" aria-live="polite" aria-label="Notifications"></div>
+
+<!-- ── OFFLINE BANNER ─────────────────────────────────────────── -->
+<div id="offline-banner" role="status" aria-live="polite">
+  <span id="offline-banner-ic">📶</span>
+  <span id="offline-banner-msg" data-i18n="offline_msg">You're offline — the app works normally and your data stays safe on your device</span>
+</div>
+
+<!-- ── v8: CONFIRM MODAL (replaces window.confirm) ─────── -->
+<div id="nx-confirm-overlay" role="alertdialog" aria-modal="true" aria-labelledby="nx-confirm-title" aria-describedby="nx-confirm-body">
+  <div id="nx-confirm-box">
+    <div id="nx-confirm-icon" aria-hidden="true">⚠️</div>
+    <div id="nx-confirm-title"></div>
+    <div id="nx-confirm-body"></div>
+    <div id="nx-confirm-actions">
+      <button class="btn btn-ghost" id="nx-confirm-cancel" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-danger" id="nx-confirm-ok" data-i18n="btn_confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── v8: INPUT MODAL (replaces prompt) ───────────────── -->
+<div id="nx-input-overlay" role="dialog" aria-modal="true" aria-labelledby="nx-input-title">
+  <div id="nx-input-box">
+    <div id="nx-input-title"></div>
+    <input id="nx-input-field" type="number" min="0" max="100" step="1" aria-label="Value">
+    <div id="nx-input-actions">
+      <button class="btn btn-ghost" id="nx-input-cancel" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" id="nx-input-ok" data-i18n="btn_ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EVENT POPUP ────────────────────────────────────────── -->
+<div id="evt-popup">
+  <div style="font-size:30px;text-align:center;margin-bottom:8px" id="ep-ic">🎉</div>
+  <div style="font-size:14px;font-weight:800;text-align:center;color:var(--accent3);margin-bottom:6px" id="ep-title">Evento!</div>
+  <div style="font-size:11px;color:var(--text3);text-align:center" id="ep-desc">...</div>
+  <button class="btn btn-orange btn-sm w100 mt3" data-action="event:close" data-i18n="btn_ok">OK!</button>
+</div>
+
+<!-- ── FOCUS OVERLAY ──────────────────────────────────────── -->
+<div id="focus-overlay">
+  <div class="text-c">
+    <div style="font-size:50px;margin-bottom:16px">🧘</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:8px" data-i18n="dw_focus_mode">Focus Mode</div>
+    <div class="dim small mb4" id="focus-goal-text"></div>
+    <div style="font-family:var(--font-mono);font-size:56px;font-weight:700;color:var(--accent2);margin-bottom:28px" id="focus-time">25:00</div>
+    <div class="flex gap2" style="justify-content:center;">
+      <button class="btn btn-blue" id="focus-toggle-btn" data-action="timer:toggle"><span aria-hidden="true">⏸</span> <span data-i18n="dw_pause">Pause</span></button>
+      <button class="btn btn-ghost btn-sm" data-action="timer:focus-exit" data-i18n="btn_exit">Exit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD REWARD -->
+<div class="overlay" id="m-add-reward">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-reward"></div>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title"><span aria-hidden="true">🎁</span> <span data-i18n="rewards_title">Reward</span></div><div class="modal-x" data-action="modal:close" data-modal="m-add-reward">✕</div>
+    <input type="hidden" id="mr-id">
+    <div class="frow"><div class="fg"><label class="fl" data-i18n="field_name">Name</label><input type="text" class="fi" id="mr-name" data-i18n-placeholder="reward_name_ph" placeholder="Netflix night"></div><div class="fg"><label class="fl" data-i18n="field_emoji">Emoji</label><input type="text" class="fi" id="mr-ic" data-i18n-placeholder="reward_icon_ph" placeholder="🎬" maxlength="4"></div></div>
+    <div class="frow"><div class="fg"><label class="fl" data-i18n="field_xp_cost">XP Cost</label><input type="number" class="fi" id="mr-cost" data-i18n-placeholder="reward_cost_ph" placeholder="500" min="1"></div><div class="fg"><label class="fl" data-i18n="field_category">Category</label><select class="fs" id="mr-cat"><option value="piacere">😊 Pleasure</option><option value="cibo">🍕 Food</option><option value="social">👥 Social</option><option value="acquisto">🛍 Purchase</option><option value="altro">✨ Other</option></select></div></div>
+    <div class="fg"><label class="fl" data-i18n="field_description">Description</label><input type="text" class="fi" id="mr-desc" data-i18n-placeholder="reward_desc_ph" placeholder="Optional"></div>
+    <div class="flex gap2 mt3"><button class="btn btn-primary" data-action="reward:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button><button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-reward" data-i18n="btn_cancel">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ADD SKILL -->
+<div class="overlay" id="m-add-skill">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-skill"></div>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title"><span aria-hidden="true">🛠</span> <span data-i18n="skills_title">Skills</span></div><div class="modal-x" data-action="modal:close" data-modal="m-add-skill">✕</div>
+    <input type="hidden" id="msk-id">
+    <div class="fg"><label class="fl" data-i18n="field_name">Name</label><input type="text" class="fi" id="msk-name" data-i18n-placeholder="skill_name_ph" placeholder="Python programming"></div>
+    <div class="frow"><div class="fg"><label class="fl" data-i18n="field_category">Category</label><select class="fs" id="msk-cat"><option value="tecnica">💻 Technical</option><option value="creativa">🎨 Creative</option><option value="fisica">💪 Physical</option><option value="mentale">🧠 Mental</option><option value="sociale">👥 Social</option><option value="altra">✨ Other</option></select></div><div class="fg"><label class="fl" data-i18n="field_goal_hours">Goal (hours)</label><input type="number" class="fi" id="msk-target" data-i18n-placeholder="skill_goal_ph" placeholder="100" min="1"></div></div>
+    <div class="fg"><label class="fl" data-i18n="field_notes">Notes</label><textarea class="fta" id="msk-note" data-i18n-placeholder="skill_why_ph" placeholder="Why do you want to learn this skill?"></textarea></div>
+    <div class="flex gap2 mt3"><button class="btn btn-primary" data-action="skill:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button><button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-skill" data-i18n="btn_cancel">Cancel</button></div>
+  </div>
+</div>
+
+<!-- LOG PRACTICE -->
+<div class="overlay" id="m-log-practice">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-log-practice"></div>
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal-title" id="mp-title">📝 Session</div><div class="modal-x" data-action="modal:close" data-modal="m-log-practice">✕</div>
+    <input type="hidden" id="mp-sid">
+    <div class="fg mt2"><label class="fl" data-i18n="field_minutes_practiced">Minutes practiced</label><input type="number" class="fi" id="mp-min" data-i18n-placeholder="skill_sessions_ph" placeholder="30" min="1" style="font-size:22px;text-align:center"></div>
+    <div class="fg"><label class="fl" data-i18n="field_session_notes">Session notes</label><input type="text" class="fi" id="mp-note" placeholder="What did you do?"></div>
+    <div class="flex gap2 mt3" style="justify-content:center"><button class="btn btn-primary" data-action="skill:log-practice"><span aria-hidden="true">✅</span> <span data-i18n="btn_save">Save</span></button><button class="btn btn-ghost" data-action="modal:close" data-modal="m-log-practice" data-i18n="btn_cancel">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ADD LIBRARY ITEM -->
+<div class="overlay" id="m-add-lib">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-lib"></div>
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title"><span aria-hidden="true">📚</span> <span data-i18n="library_modal_title">Add to Library</span></div><div class="modal-x" data-action="modal:close" data-modal="m-add-lib">✕</div>
+    <input type="hidden" id="ml-id">
+    <div class="fg"><label class="fl" data-i18n="field_title">Title</label><input type="text" class="fi" id="ml-title" placeholder="Atomic Habits"></div>
+    <div class="frow"><div class="fg"><label class="fl" data-i18n="field_author">Author</label><input type="text" class="fi" id="ml-author" placeholder="James Clear"></div><div class="fg"><label class="fl" data-i18n="field_type">Type</label><select class="fs" id="ml-type"><option value="book">📖 Book</option><option value="course">🎓 Course</option><option value="article">📄 Article</option><option value="podcast">🎙 Podcast</option><option value="video">🎬 Video</option></select></div></div>
+    <div class="frow"><div class="fg"><label class="fl" data-i18n="field_pages_hours">Pages/Hours</label><input type="number" class="fi" id="ml-size" placeholder="320" min="1"></div><div class="fg"><label class="fl" data-i18n="field_completion_xp">Completion XP</label><input type="number" class="fi" id="ml-xp" placeholder="150" min="1"></div></div>
+    <div class="flex gap2 mt3"><button class="btn btn-primary" data-action="library:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button><button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-lib" data-i18n="btn_cancel">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ADD VISION CARD -->
+<div class="overlay" id="m-add-vision">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-vision"></div>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title"><span aria-hidden="true">🌌</span> <span data-i18n="nav_vision_board">Vision Board</span></div><div class="modal-x" data-action="modal:close" data-modal="m-add-vision">✕</div>
+    <input type="hidden" id="mv-id">
+    <div class="frow"><div class="fg"><label class="fl" data-i18n="field_emoji">Emoji</label><input type="text" class="fi" id="mv-ic" placeholder="🏆" maxlength="4"></div><div class="fg"><label class="fl" data-i18n="field_area">Area</label><select class="fs" id="mv-area"><option value="corpo">💪 Body</option><option value="mente">🧠 Mind</option><option value="spirito">❤️ Spirit</option><option value="vocazione">💼 Vocation</option><option value="finanze">💰 Finances</option><option value="sociale">👥 Social</option></select></div></div>
+    <div class="fg"><label class="fl" data-i18n="field_title_goal">Title / Goal</label><input type="text" class="fi" id="mv-title" placeholder="Run a marathon"></div>
+    <div class="fg"><label class="fl" data-i18n="field_description">Description</label><textarea class="fta" id="mv-desc" placeholder="Visualize your future..."></textarea></div>
+    <div class="flex gap2 mt3"><button class="btn btn-primary" data-action="vision:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button><button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-vision" data-i18n="btn_cancel">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MODALS ══════════════════════════ -->
+
+<!-- ADD/EDIT HABIT -->
+<div class="overlay" id="m-add-habit">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-habit"></div>
+  <div class="modal">
+    <div class="modal-title" id="mh-title">✅ New Habit</div>
+    <div class="modal-x" data-action="modal:close" data-modal="m-add-habit">✕</div>
+    <input type="hidden" id="mh-id">
+    <div class="frow">
+      <div class="fg"><label class="fl" data-i18n="habit_name">Name</label><input type="text" class="fi" id="mh-name" data-i18n-placeholder="habit_name_ph" placeholder="Morning meditation"></div>
+      <div class="fg"><label class="fl" data-i18n="habit_category">Category</label>
+        <select class="fs" id="mh-cat">
+          <option value="salute">💚 Health</option><option value="mente">🧠 Mind</option>
+          <option value="studio">📚 Study</option><option value="fitness">🏋 Fitness</option>
+          <option value="sociale">👥 Social</option><option value="creativo">🎨 Creative</option>
+          <option value="produttività">⚡ Productivity</option><option value="altro">✨ Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl" data-i18n="habit_type">Type</label>
+        <select class="fs" id="mh-type">
+          <option value="boolean">✅ Yes/No</option>
+          <option value="count">🔢 Count</option>
+          <option value="time">⏱ Time (min)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl" data-i18n="habit_difficulty">Difficulty</label>
+        <select class="fs" id="mh-diff">
+          <option value="1">😊 Easy ×1</option><option value="2">😐 Medium ×1.5</option>
+          <option value="3">💪 Hard ×2</option><option value="4">🔥 Extreme ×3</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl" data-i18n="habit_trigger">Trigger</label><input type="text" class="fi" id="mh-trigger" data-i18n-placeholder="habit_trigger_ph" placeholder="e.g. after breakfast"></div>
+      <div class="fg"><label class="fl" data-i18n="habit_target">Target</label><input type="text" class="fi" id="mh-target" placeholder="e.g. 10-20"></div>
+    </div>
+    <div class="fg">
+      <label class="fl" data-i18n="field_active_days">Active days</label>
+      <div class="days-wrap" id="mh-days">
+        <div class="day-cb on" data-d="0">L</div><div class="day-cb on" data-d="1">M</div>
+        <div class="day-cb on" data-d="2">M</div><div class="day-cb on" data-d="3">G</div>
+        <div class="day-cb on" data-d="4">V</div><div class="day-cb on" data-d="5">S</div>
+        <div class="day-cb on" data-d="6">D</div>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl" data-i18n="habit_identity_link">Linked identity</label><select class="fs" id="mh-id-link"></select></div>
+      <div class="fg"><label class="fl" data-i18n="habit_goal_link">Linked goal</label><select class="fs" id="mh-goal-link"></select></div>
+    </div>
+    <div class="fg"><label class="fl" data-i18n="field_icon">Icon</label><div class="ip" id="mh-ip"></div></div>
+    <div class="fg"><label class="fl" data-i18n="field_color">Color</label><div class="cp" id="mh-cp"></div></div>
+    <div class="flex gap2 mt3">
+      <button class="btn btn-primary" data-action="habit:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button>
+      <button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-habit" data-i18n="btn_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD IDENTITY -->
+<div class="overlay" id="m-add-id">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-id"></div>
+  <div class="modal">
+    <div class="modal-title"><span aria-hidden="true">🧬</span> <span data-i18n="identity_new">+ New Identity</span></div>
+    <div class="modal-x" data-action="modal:close" data-modal="m-add-id">✕</div>
+    <input type="hidden" id="mid-id">
+    <div class="fg"><label class="fl" data-i18n="identity_name">Identity name</label><input type="text" class="fi" id="mid-name" data-i18n-placeholder="identity_name_ph" placeholder="Disciplined student"></div>
+    <div class="fg"><label class="fl" data-i18n="field_description">Description</label><textarea class="fta" id="mid-desc" data-i18n-placeholder="identity_desc_ph" placeholder="Who is this version of you?"></textarea></div>
+    <div class="fg"><label class="fl" data-i18n="field_core_values">Core values (comma separated)</label><input type="text" class="fi" id="mid-vals" data-i18n-placeholder="identity_values_ph" placeholder="discipline, consistency, growth"></div>
+    <div class="fg"><label class="fl" data-i18n="field_icon">Icon</label><div class="ip" id="mid-ip"></div></div>
+    <div class="flex gap2 mt3">
+      <button class="btn btn-primary" data-action="identity:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button>
+      <button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-id" data-i18n="btn_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD GOAL -->
+<div class="overlay" id="m-add-goal">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-goal"></div>
+  <div class="modal">
+    <div class="modal-title"><span aria-hidden="true">🎯</span> <span data-i18n="goals_new">+ New Goal</span></div>
+    <div class="modal-x" data-action="modal:close" data-modal="m-add-goal">✕</div>
+    <div class="fg"><label class="fl" data-i18n="field_name">Name</label><input type="text" class="fi" id="mg-name" data-i18n-placeholder="goals_name_ph" placeholder="Graduate with top marks"></div>
+    <div class="fg"><label class="fl" data-i18n="field_description">Description</label><textarea class="fta" id="mg-desc" data-i18n-placeholder="goals_desc_ph" placeholder="Details..."></textarea></div>
+    <div class="frow">
+      <div class="fg"><label class="fl" data-i18n="field_identity">Identity</label><select class="fs" id="mg-id"></select></div>
+      <div class="fg"><label class="fl" data-i18n="field_deadline">Deadline</label><input type="date" class="fi" id="mg-dead"></div>
+    </div>
+    <div class="fg"><label class="fl" data-i18n="goals_milestones">Milestones</label><textarea class="fta" id="mg-miles" data-i18n-placeholder="goals_milestones_ph" placeholder="First milestone&#10;Second milestone"></textarea></div>
+    <div class="flex gap2 mt3">
+      <button class="btn btn-primary" data-action="goal:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button>
+      <button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-goal" data-i18n="btn_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTION -->
+<div class="overlay" id="m-direction">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-direction"></div>
+  <div class="modal">
+    <div class="modal-title"><span aria-hidden="true">🧭</span> <span data-i18n="direction_title">Life Direction</span></div>
+    <div class="modal-x" data-action="modal:close" data-modal="m-direction">✕</div>
+    <div class="fg"><label class="fl" data-i18n="direction_who_label">Who do I want to become?</label><textarea class="fta" id="md-who" data-i18n-placeholder="direction_who_ph" placeholder="The person you aspire to be..."></textarea></div>
+    <div class="fg"><label class="fl" data-i18n="direction_1_year">1-year vision</label><textarea class="fta" id="md-1y" data-i18n-placeholder="direction_1_year_ph" placeholder="Where do you see yourself in 1 year?"></textarea></div>
+    <div class="fg"><label class="fl" data-i18n="direction_5_year">5-year vision</label><textarea class="fta" id="md-5y" data-i18n-placeholder="direction_5_year_ph" placeholder="Where do you see yourself in 5 years?"></textarea></div>
+    <div class="flex gap2 mt3">
+      <button class="btn btn-primary" data-action="direction:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button>
+      <button class="btn btn-ghost" data-action="modal:close" data-modal="m-direction" data-i18n="btn_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD EXPERIMENT -->
+<div class="overlay" id="m-add-exp">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-exp"></div>
+  <div class="modal">
+    <div class="modal-title"><span aria-hidden="true">🧪</span> <span data-i18n="experiments_add">+ Experiment</span></div>
+    <div class="modal-x" data-action="modal:close" data-modal="m-add-exp">✕</div>
+    <div class="fg"><label class="fl" data-i18n="field_name">Name</label><input type="text" class="fi" id="me-name" data-i18n-placeholder="experiments_name_ph" placeholder="10 minutes of meditation every morning"></div>
+    <div class="fg"><label class="fl" data-i18n="field_hypothesis">Hypothesis</label><textarea class="fta" id="me-hyp" data-i18n-placeholder="experiments_hypothesis_ph" placeholder="What do you expect? How will you measure success?"></textarea></div>
+    <div class="frow">
+      <div class="fg"><label class="fl" data-i18n="field_duration">Duration</label>
+        <select class="fs" id="me-dur"><option value="7">7 days</option><option value="14">14 days</option><option value="21">21 days</option><option value="30">30 days</option></select>
+      </div>
+      <div class="fg"><label class="fl" data-i18n="field_habit">Habit</label><select class="fs" id="me-hab"></select></div>
+    </div>
+    <div class="flex gap2 mt3">
+      <button class="btn btn-primary" data-action="experiment:save"><span aria-hidden="true">🚀</span> <span data-i18n="btn_start">Start</span></button>
+      <button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-exp" data-i18n="btn_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD QUOTE -->
+<div class="overlay" id="m-add-quote">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-add-quote"></div>
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title"><span aria-hidden="true">💬</span> <span data-i18n="quotes_add_btn">+ Add</span></div>
+    <div class="modal-x" data-action="modal:close" data-modal="m-add-quote">✕</div>
+    <div class="fg"><label class="fl" data-i18n="field_quote">Quote</label><textarea class="fta" id="mq-text" data-i18n-placeholder="quote_text_ph" placeholder="Write here..."></textarea></div>
+    <div class="frow">
+      <div class="fg"><label class="fl" data-i18n="field_author">Author</label><input type="text" class="fi" id="mq-auth" data-i18n-placeholder="quote_author_ph" placeholder="Author"></div>
+      <div class="fg"><label class="fl" data-i18n="field_category">Category</label>
+        <select class="fs" id="mq-cat">
+          <option value="discipline">Discipline</option><option value="consistency">Consistency</option>
+          <option value="identity">Identity</option><option value="growth">Growth</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap2 mt3">
+      <button class="btn btn-primary" data-action="quote:save"><span aria-hidden="true">💾</span> <span data-i18n="btn_save">Save</span></button>
+      <button class="btn btn-ghost" data-action="modal:close" data-modal="m-add-quote" data-i18n="btn_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2-MIN MODAL -->
+<div class="overlay" id="m-two-min">
+  <div class="overlay-click" data-action="modal:close" data-modal="m-two-min"></div>
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <div class="modal-title"><span aria-hidden="true">⚡</span> <span data-i18n="dash_two_min_title">Two-Minute Rule</span></div>
+    <div class="modal-x" data-action="modal:close" data-modal="m-two-min">✕</div>
+    <div style="font-size:40px;margin:10px 0">🚀</div>
+    <div class="small dim mb3" style="line-height:1.6" data-i18n-html="dash_two_min_sub">Pick one habit and start now. Just two minutes.</div>
+    <div id="two-min-list"></div>
+  </div>
+</div>
+
+<!-- JavaScript: loaded in dependency order -->
+<!-- 1. Constants: keys, icons, colors, app configuration -->
+<script src="js/i18n.js"></script>
+<script src="js/shared-text.js"></script>
+<script src="js/activity-log.js"></script>
+<script src="js/lite-mode.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/demo-mode.js?v=2.2.2-demo1"></script>
+<!-- 2. Security: escapeHtml, escapeAttr, createSafeElement, InputValidator -->
+<script src="js/security.js"></script>
+<!-- 3. EventBus: lightweight pub/sub between modules -->
+<script src="js/eventbus.js"></script>
+<!-- 4. Toast: notifications + notify() alias -->
+<script src="js/toast.js"></script>
+<!-- 5. Modals: ConfirmModal, InputModal, openModal, closeModal, pickers -->
+<script src="js/modals.js"></script>
+<!-- 6. DB schema + persistence -->
+<script src="js/db-schema.js?v=2.2.2-pwa6"></script>
+<script src="js/db.js?v=2.2.2-pwa9"></script>
+<script src="js/db-reactive.js?v=2.2.2-pwa9"></script>
+<script src="js/onboarding-flow.js?v=2.2.2-pwa9"></script>
+<script src="js/storage-lifecycle.js"></script>
+<!-- 7. EntityLogic: CRUD factory + helpers per collection -->
+<script src="js/entity-logic.js"></script>
+<!-- 8. TimerWorker: precise timer backed by a Web Worker -->
+<script src="js/timer-worker.js"></script>
+<!-- 9. Background: particle canvas (OffscreenCanvas + fallback) -->
+<script src="js/background.js"></script>
+<!-- 10. UI core split into ordered modules.
+     The order still matters because each file uses globals from earlier files. -->
+<!-- 10a. Shell state, shared UI runtime state, and shared date helpers -->
+<script src="js/app-shell-state.js"></script>
+<script src="js/app-ui-state.js"></script>
+<script src="js/ui-core.js"></script>
+<!-- 10aa. Shared registry for optional modules and their surface placement -->
+<script src="js/module-registry.js"></script>
+<!-- 10b. Section navigation, routing, time view, random events, two-minute rule -->
+<script src="js/ui-core-nav.js"></script>
+<!-- 10c. XP, level-up, sidebar, memoized streaks, streak freeze, insights -->
+<script src="js/ui-core-xp.js"></script>
+<!-- 10d. Daily dashboard helpers extracted from the habit monolith -->
+<script src="js/ui-core-dashboard.js"></script>
+<!-- 10e. Habit list and progress panel helpers extracted from the habit monolith -->
+<script src="js/habits/ui-core-habit-panels.js?v=2.2.2-pwa12"></script>
+<!-- 10f. Habit surface helpers: tabs, stacking, alignment, drag-and-drop -->
+<script src="js/habits/ui-core-habit-surface.js?v=2.2.2-pwa12"></script>
+<!-- 10g. Habit rendering, dashboard orchestration, quests, heatmap, inline edit -->
+<script src="js/habits/ui-core-habits.js?v=2.2.2-pwa12"></script>
+<!-- 10h. Client-side local reminders -->
+<script src="js/reminders.js"></script>
+<!-- 10h. Themes, module toggles, i18n helpers, settings actions -->
+<!--      Must load before fitness.js / rpg.js / stats.js because they call L() -->
+<script src="js/ui-core-settings.js?v=2.2.2-pwa9"></script>
+<script src="js/ui-core-settings-surface.js?v=2.2.2-pwa9"></script>
+<script src="js/ui-core-settings-data.js?v=2.2.2-pwa9"></script>
+<!-- 11. Habits: habit CRUD, identities, goals -->
+<script src="js/habits/habits.js?v=2.2.2-pwa12"></script>
+<!-- 11b. Shared canvas chart helpers -->
+<script src="js/chart-utils.js"></script>
+<!-- 12. Deep Work: timer, sessions, focus mode, distractions, study plan -->
+<script src="js/deepwork.js"></script>
+<!-- 12b. Shared daily rhythm aggregation for reflection + stats calendar -->
+<script src="js/daily-rhythm.js"></script>
+<!-- 13. Reflection: prompts, mood, weekly review, history -->
+<script src="js/reflection.js"></script>
+<!-- 14. RPG: avatar tier, life areas, attributes, radar chart -->
+<script src="js/rpg.js"></script>
+<!-- 15. Stats: renderStats, canvas charts, achievements, checkAch -->
+<script src="js/stats.js"></script>
+<!-- 16. Fitness: workout log, water tracker, body weight, PR -->
+<script src="js/fitness.js"></script>
+<!-- 17. Domain modules split from misc-features.js -->
+<script src="js/experiments.js"></script>
+<script src="js/packages.js"></script>
+<script src="js/rewards.js"></script>
+<script src="js/library.js"></script>
+<!-- 18. Tomorrow Planner: remainder of misc-features.js -->
+<script src="js/misc-features.js"></script>
+<!-- 19. Auto-backup via File System Access API -->
+<script src="js/backup.js"></script>
+<!-- 20. Delegated UI actions -->
+<script src="js/event-handlers.js?v=2.2.2-pwa6"></script>
+<!-- 21. Init: initApp() + async IDB bootstrap -->
+<script src="js/init.js?v=2.2.2-pwa6"></script>
+
+</body>
+</html>

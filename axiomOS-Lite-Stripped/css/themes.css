@@ -1,0 +1,4 @@
+[data-theme="cyber"]{--bg:#070011;--bg2:#0d0020;--bg3:#14002f;--accent:#e040fb;--accent2:#00e5ff;--accent3:#ff4081;--ag:rgba(224,64,251,.15);--ab:rgba(0,229,255,.15);--apr:rgba(255,64,129,.15);}
+[data-theme="solo"]{--bg:#06000f;--bg2:#0c001f;--bg3:#12002f;--accent:#7c3aed;--accent2:#f59e0b;--accent3:#ef4444;--ag:rgba(124,58,237,.15);--ab:rgba(245,158,11,.15);}
+[data-theme="ghibli"]{--bg:#04100a;--bg2:#081a10;--bg3:#0d2418;--accent:#10b981;--accent2:#60a5fa;--accent3:#f97316;--ag:rgba(16,185,129,.15);--ab:rgba(96,165,250,.15);}
+[data-theme="minimal"]{--bg:#0c0c0c;--bg2:#141414;--bg3:#1c1c1c;--accent:#d4d4d4;--accent2:#737373;--accent3:#f97316;--ag:rgba(212,212,212,.1);--ab:rgba(115,115,115,.1);}

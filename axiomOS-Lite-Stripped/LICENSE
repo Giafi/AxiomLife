@@ -1,0 +1,99 @@
+axiomOS Commercial Template License
+Release: v2.2.2
+
+Copyright (c) 2024-2026 Gianni Fisichella
+Contact: axiomoslife@gmail.com
+
+1. Ownership
+
+All source code, bundled assets, documentation, and related materials in this
+distribution of axiomOS remain the intellectual property of Gianni Fisichella
+unless a separate written assignment or license agreement states otherwise.
+
+2. License Model
+
+This package is licensed as a non-exclusive commercial template. Each valid
+purchase or direct written authorization grants a limited right to use the
+template under this license. The copyright holder retains ownership and may
+license or sell the same template to multiple customers. No exclusivity is
+granted unless stated in a separately signed written agreement.
+
+3. License Grant
+
+If you obtained this package through a valid purchase or direct written
+authorization, you may:
+
+- use, reproduce, display, and modify the software to build one end product;
+- brand, customize, and deploy that end product for yourself or for one client;
+- keep reasonable copies for development, staging, backup, and internal review
+  for that same end product; and
+- allow employees or contractors to access the source only as needed to work on
+  that licensed end product.
+
+4. Additional Licenses
+
+A separate license is required for each additional end product, each additional
+client project, or any broader distribution right not expressly granted here.
+
+5. Restricted Acts
+
+Without prior written permission, you may not:
+
+- redistribute the source code or any substantial portion of it;
+- publish the source code in a public repository or package registry;
+- sublicense, lease, rent, resell, or share the software as a template,
+  starter, boilerplate, or competing product;
+- remove copyright or attribution notices;
+- allow third parties to extract or reuse the template source outside the
+  licensed end product; or
+- use the software as the basis for another template, theme, app starter, or
+  no-code resale asset.
+
+6. End Product Definition
+
+An "end product" means a finished branded application, website, internal tool,
+or client deliverable that incorporates this software as a component and is not
+distributed onward as a reusable source template.
+
+7. Modifications
+
+You may modify the software for your licensed end product, but all modified or
+derivative versions remain subject to this license unless a separate written
+agreement states otherwise.
+
+8. Exclusivity And Custom Rights
+
+Exclusive rights, copyright assignment, OEM distribution rights, marketplace
+resale rights, or bulk relicensing require a separate written agreement signed
+by the copyright holder.
+
+9. Support And Updates
+
+Unless explicitly agreed in writing, this license does not require the
+copyright holder to provide maintenance, updates, custom development, or
+support services.
+
+10. Warranty Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+11. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT HOLDER SHALL
+NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES, OR FOR ANY LOSS OF DATA, PROFITS, REVENUE, OR BUSINESS
+INTERRUPTION ARISING FROM THE USE OF OR INABILITY TO USE THE SOFTWARE.
+
+12. Termination
+
+If you materially breach this license, your rights under it terminate
+automatically. Upon termination, you must stop distributing new end products
+built from the source package and delete any undistributed copies of the source
+package in your control.
+
+13. Package Provenance
+
+Development provenance and AI-assisted creation notes for this release are
+documented in PROVENANCE.md.

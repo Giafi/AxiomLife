@@ -1,0 +1,64 @@
+{
+  "name": "axiomOS Lite",
+  "short_name": "axiomLite",
+  "description": "Free trial of axiomOS with the core daily loop: dashboard, habits, focus, tomorrow and statistics.",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "theme_color": "#00e5a0",
+  "background_color": "#050810",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "prefer_related_applications": false,
+  "categories": ["productivity", "lifestyle", "health"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Home",
+      "description": "Open the Lite dashboard",
+      "url": "./index.html?section=dashboard",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Habits",
+      "short_name": "Habits",
+      "description": "View habits in Lite",
+      "url": "./index.html?section=habits",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="40" fill="#050810"/>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00e5a0"/>
+      <stop offset="100%" stop-color="#0099ff"/>
+    </linearGradient>
+  </defs>
+  <!-- Hexagon -->
+  <polygon points="96,22 158,57 158,135 96,170 34,135 34,57"
+    stroke="url(#g1)" stroke-width="6" fill="rgba(0,229,160,0.08)"/>
+  <!-- Axiom A shape -->
+  <path d="M65 138 L96 62 L127 138" stroke="url(#g1)" stroke-width="9"
+    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <line x1="75" y1="115" x2="117" y2="115"
+    stroke="url(#g1)" stroke-width="8" stroke-linecap="round"/>
+  <!-- Apex dot -->
+  <circle cx="96" cy="62" r="7" fill="#00e5a0"/>
+</svg>

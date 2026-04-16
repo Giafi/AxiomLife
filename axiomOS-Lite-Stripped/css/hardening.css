@@ -1,0 +1,10 @@
+/* Security and pre-paint overrides */
+html[data-nav-advanced-open="1"] #nav-advanced {
+  max-height: 1200px;
+  opacity: 1;
+}
+
+html[data-nav-advanced-open="1"] #nav-advanced-toggle .nav-adv-arrow {
+  display: inline-block;
+  transform: rotate(90deg);
+}
